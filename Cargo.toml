@@ -3,6 +3,16 @@ name = "ghoda"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+path = "src/lib.rs" 
+
+# In TOML [[]] means an array i.e. we can have multiple 
+# binary files
+[[bin]]
+path = "src/main.rs"
+name = "ghoda"
+
 [dependencies]
 actix-web = "4.13.0"
+reqwest = "0.13.3"
 tokio = { version = "1.52.1", features = ["full"] }
