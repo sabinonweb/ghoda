@@ -15,4 +15,13 @@ name = "ghoda"
 [dependencies]
 actix-web = "4.13.0"
 reqwest = "0.13.3"
+serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.1", features = ["full"] }
+sqlx = { version = "0.7", features = [
+  "runtime-tokio-rustls",
+  "macros",
+  "postgres",
+  "uuid",
+  "chrono",
+  "migrate"
+], default-features = false }
