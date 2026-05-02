@@ -1,5 +1,8 @@
 use std::net::TcpListener;
 
+use ghoda::configurations::get_configurations;
+use sqlx::{Connection, PgConnection};
+
 #[tokio::test]
 async fn health_check_test() {
     let address = spawn_app();
@@ -28,6 +31,11 @@ fn spawn_app() -> String {
 #[tokio::test]
 async fn subcribe_returns_a_200_for_valid_request_data() {
     let address = spawn_app();
+    let configuations = get_configurations().expect("Failed to get the configurations!");
+    let connection_string = configuations.database.connection_string();
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres");
     let client = reqwest::Client::new();
 
     println!("Address: {:?}", address);
@@ -41,6 +49,14 @@ async fn subcribe_returns_a_200_for_valid_request_data() {
         .expect("Failed to execute request");
 
     assert_eq!(response.status().as_u16(), 200);
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&mut connection)
+        .await
+        .expect("Failed to fetch saved subscriptions");
+
+    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
+    assert_eq!(saved.name, "le guin");
 }
 
 #[tokio::test]
