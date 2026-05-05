@@ -1,7 +1,6 @@
-use std::net::TcpListener;
-
 use ghoda::configurations::get_configurations;
 use sqlx::{Connection, PgConnection};
+use std::net::TcpListener;
 
 #[tokio::test]
 async fn health_check_test() {
