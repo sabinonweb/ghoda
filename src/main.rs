@@ -8,7 +8,7 @@ use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let subscriber = get_subscriber();
+    let subscriber = get_subscriber("ghoda".into(), "info".into());
     init_subscriber(subscriber);
 
     let configurations = get_configurations().expect("Failed to read configurations!");

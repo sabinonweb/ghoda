@@ -1,4 +1,7 @@
-use ghoda::configurations::{get_configurations, DatabaseSettings};
+use ghoda::{
+    configurations::{get_configurations, DatabaseSettings},
+    telemetry::{get_subscriber, init_subscriber},
+};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -25,6 +28,9 @@ async fn health_check_test() {
 }
 
 async fn spawn_app() -> TestApp {
+    let subscriber = get_subscriber("test".into(), "debug".into());
+    init_subscriber(subscriber);
+
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     let mut configurations = get_configurations().expect("Failed to get configuration!");
