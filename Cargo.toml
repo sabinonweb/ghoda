@@ -33,3 +33,4 @@ log = "0.4.29"
 tracing = { version = "0.1.44", features = ["log"] }
 tracing-subscriber = { version = "0.3.23", features = ["registry", "env-filter"] }
 tracing-bunyan-formatter = "0.3.10"
+tracing-log = "0.2.0"
