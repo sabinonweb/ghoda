@@ -12,7 +12,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
 }
 
-static _TRACING: Lazy<()> = Lazy::new(|| {
+static TRACING: Lazy<()> = Lazy::new(|| {
     let default_fitler_level = "info".to_string();
     let subscriber_name = "zero2prod".to_string();
 
@@ -42,6 +42,7 @@ async fn health_check_test() {
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     let mut configurations = get_configurations().expect("Failed to get configuration!");
@@ -81,7 +82,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
 }
 
 #[tokio::test]
-async fn subcribe_returns_a_200_for_valid_request_data() {
+async fn subscribe_returns_a_200_for_valid_request_data() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
@@ -106,7 +107,7 @@ async fn subcribe_returns_a_200_for_valid_request_data() {
 }
 
 #[tokio::test]
-async fn subcribe_returns_a_400_for_invalid_request_data() {
+async fn subscribe_returns_a_400_for_invalid_request_data() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
