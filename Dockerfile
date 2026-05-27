@@ -11,7 +11,10 @@ RUN apt update && apt install lld clang -y
 # Copy all the files from our working environment to our Docker image
 COPY . .
 
+# Check offline metadata instead of calling a live db
+ENV SQLX_OFFLINE true
+
 RUN cargo build --release
 
 # When docker run is executed, launch the binary!
-ENTRYPOINT ["../target/release/ghoda"]
+ENTRYPOINT ["./target/release/ghoda"]
