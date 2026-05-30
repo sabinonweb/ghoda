@@ -3,8 +3,7 @@ use ghoda::{
     startup::run,
     telemetry::{get_subscriber, init_subscriber},
 };
-use secrecy::ExposeSecret;
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::TcpListener;
 
 #[tokio::main]
@@ -13,10 +12,14 @@ async fn main() -> std::io::Result<()> {
     init_subscriber(subscriber);
 
     let configurations = get_configurations().expect("Failed to read configurations!");
-    let connection = PgPool::connect(&configurations.database.connection_string())
-        .await
-        .expect("Failed a connection to postgres");
-    let address = format!("127.0.0.1:{}", configurations.application_port);
+    let connection = PgPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy(&configurations.database.connection_string())
+        .expect("Failed to create Postgres connection pool.");
+    let address = format!(
+        "{}:{}",
+        configurations.application.host, configurations.application.port
+    );
     let listener = TcpListener::bind(address.clone()).unwrap();
     run(listener, connection)?.await
 }
