@@ -1,20 +1,30 @@
-# Latest stable version of Rust as a base image
-FROM rust:1.92.0 AS builder
-
-# Swtiching to working directory app
-# It will be created if it doesn't exist already
+FROM lukemathwalker/cargo-chef:latest-rust-1.59.0 as chef
 WORKDIR /app 
 
 # System dependencies for our linking configuration
 RUN apt update && apt install lld clang -y
 
+# Latest stable version of Rust as a base image
+FROM chef as planner
+
+# Swtiching to working directory app
+# It will be created if it doesn't exist already
+
 # Copy all the files from our working environment to our Docker image
 COPY . .
+# Compute a lock-like file for our project
+RUN cargo chef prepare --recipe-path recipe.json
+
+From chef as builder 
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo-chef cook --release --recipe-path recipe.json
+# If recipe.json is same, all layers are cached 
+COPY ..
 
 # Check offline metadata instead of calling a live db
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --release
+RUN cargo build --release --bin ghoda
 
 FROM debian:bullseye-slim AS runtime
 
@@ -28,7 +38,6 @@ RUN apt-get update -y \
 
 COPY --from=builder /app/target/release/ghoda ghoda
 COPY configuration configuration
-
 
 ENV APP_ENVIRONMENT=production
 

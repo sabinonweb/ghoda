@@ -1,0 +1,21 @@
+name: ghoda
+region: fra
+
+services:
+  - name: ghoda
+  dockerfile_path: Dockerfile
+  source_dir: .
+  github:
+    branch: main
+    # continuous deployment
+    deploy_on_push: true
+    repo: sabinonweb/ghoda
+
+  health_check:
+    http_path: /health_check
+
+  http_port: 8000
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  routes:
+    path: /
