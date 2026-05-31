@@ -3,7 +3,7 @@ use ghoda::{
     startup::run,
     telemetry::{get_subscriber, init_subscriber},
 };
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 
 #[tokio::main]
