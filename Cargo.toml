@@ -41,3 +41,8 @@ tracing-actix-web = "0.7.21"
 unicode-segmentation = "1.13.3"
 claim = "0.5.0"
 validator = "0.20.0"
+fake = "~2.8"
+
+[dev-dependencies]
+quickcheck = "1.1.0"
+quickcheck_macros = "1.2.0"
