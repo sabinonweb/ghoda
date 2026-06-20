@@ -1,5 +1,6 @@
 use ghoda::{
     configurations::{get_configurations, DatabaseSettings},
+    email_client::EmailClient,
     telemetry::{get_subscriber, init_subscriber},
 };
 use once_cell::sync::Lazy;
@@ -48,8 +49,16 @@ async fn spawn_app() -> TestApp {
     let mut configurations = get_configurations().expect("Failed to get configuration!");
     configurations.database.database_name = Uuid::new_v4().to_string();
     let connection_pool = configure_database(&configurations.database).await;
+
+    let sender_email = configurations
+        .email_client
+        .sender()
+        .expect("Invalid sender email address");
+    let email_client = EmailClient::new(configurations.email_client.base_url, sender_email);
+
     tokio::spawn(
-        ghoda::startup::run(listener, connection_pool.clone()).expect("Failed to get server"),
+        ghoda::startup::run(listener, connection_pool.clone(), email_client)
+            .expect("Failed to get server"),
     );
     let address = format!("http://127.0.0.1:{}", port);
 
