@@ -4,9 +4,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::{
-    new_subscriber, subscriber_email::SubscriberEmail, NewSubscriber, SubscriberName,
-};
+use crate::domain::{subscriber_email::SubscriberEmail, NewSubscriber, SubscriberName};
 
 #[derive(Deserialize)]
 pub struct FormData {

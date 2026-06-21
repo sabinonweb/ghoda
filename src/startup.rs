@@ -1,8 +1,8 @@
 use crate::{
-    email_client::{self, EmailClient},
+    email_client::EmailClient,
     routes::{health_check::health_check, subscriptions::subscribe},
 };
-use actix_web::{dev::Server, middleware::Logger, web, App, HttpServer};
+use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
