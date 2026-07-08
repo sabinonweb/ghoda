@@ -1,7 +1,6 @@
+use crate::domain::subscriber_email::SubscriberEmail;
 use secrecy::{ExposeSecret, SecretBox};
 use serde::Deserialize;
-
-use crate::domain::subscriber_email::SubscriberEmail;
 
 #[derive(Deserialize)]
 pub struct Settings {

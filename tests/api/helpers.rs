@@ -1,9 +1,11 @@
 use ghoda::{
     configurations::{get_configurations, DatabaseSettings},
     email_client::EmailClient,
+    startup::{get_connection_pool, Application},
     telemetry::{get_subscriber, init_subscriber},
 };
 use once_cell::sync::Lazy;
+use secrecy::{ExposeSecret, SecretBox};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -29,38 +31,43 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 pub async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = listener.local_addr().unwrap().port();
     let mut configurations = get_configurations().expect("Failed to get configuration!");
     configurations.database.database_name = Uuid::new_v4().to_string();
-    let connection_pool = configure_database(&configurations.database).await;
 
     let sender_email = configurations
         .email_client
         .sender()
         .expect("Invalid sender email address");
     let timeout = configurations.email_client.timeout();
+    let authorization_token = SecretBox::new(Box::new(
+        configurations
+            .email_client
+            .authorization_token
+            .expose_secret()
+            .to_owned(),
+    ));
+
     let email_client = EmailClient::new(
-        configurations.email_client.base_url,
+        configurations.email_client.base_url.clone(),
         sender_email,
-        configurations.email_client.authorization_token,
+        authorization_token,
         timeout,
     );
+    let db_pool = get_connection_pool(&configurations);
 
-    tokio::spawn(
-        ghoda::startup::run(listener, connection_pool.clone(), email_client)
-            .expect("Failed to get server"),
-    );
-    let address = format!("http://127.0.0.1:{}", port);
+    let application = Application::build(configurations)
+        .await
+        .expect("Failed to build the application");
+    let address = format!("http://127.0.0.:{}", application.port());
 
-    TestApp {
-        address,
-        db_pool: connection_pool,
-    }
+    tokio::spawn(application.run_until_stopped());
+
+    TestApp { address, db_pool }
     // let server = run().expect("Failed to get the server");
     // let _ = tokio::spawn(server);
 }
 
-pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect(&config.connection_string_without_db())
         .await
         .expect("Failed to connect to Postgres");

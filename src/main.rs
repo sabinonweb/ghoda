@@ -1,11 +1,8 @@
 use ghoda::{
     configurations::get_configurations,
-    email_client::EmailClient,
-    startup::run,
+    startup::Application,
     telemetry::{get_subscriber, init_subscriber},
 };
-use sqlx::postgres::PgPoolOptions;
-use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -13,27 +10,8 @@ async fn main() -> std::io::Result<()> {
     init_subscriber(subscriber);
 
     let configurations = get_configurations().expect("Failed to read configurations!");
-    let connection = PgPoolOptions::new()
-        .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(&configurations.database.connection_string())
-        .expect("Failed to create Postgres connection pool.");
+    let application = Application::build(configurations).await?;
+    application.run_until_stopped().await?;
 
-    let sender_email = configurations
-        .email_client
-        .sender()
-        .expect("Invalid sender email address");
-    let timeout = configurations.email_client.timeout();
-    let email_client = EmailClient::new(
-        configurations.email_client.base_url,
-        sender_email,
-        configurations.email_client.authorization_token,
-        timeout,
-    );
-
-    let address = format!(
-        "{}:{}",
-        configurations.application.host, configurations.application.port
-    );
-    let listener = TcpListener::bind(address.clone()).unwrap();
-    run(listener, connection, email_client)?.await
+    Ok(())
 }
