@@ -1,13 +1,10 @@
 use ghoda::{
     configurations::{get_configurations, DatabaseSettings},
-    email_client::EmailClient,
     startup::{get_connection_pool, Application},
     telemetry::{get_subscriber, init_subscriber},
 };
 use once_cell::sync::Lazy;
-use secrecy::{ExposeSecret, SecretBox};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::TcpListener;
 use uuid::Uuid;
 
 pub struct TestApp {
@@ -30,35 +27,13 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 
 pub async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let mut configurations = get_configurations().expect("Failed to get configuration!");
     configurations.database.database_name = Uuid::new_v4().to_string();
-
-    let sender_email = configurations
-        .email_client
-        .sender()
-        .expect("Invalid sender email address");
-    let timeout = configurations.email_client.timeout();
-    let authorization_token = SecretBox::new(Box::new(
-        configurations
-            .email_client
-            .authorization_token
-            .expose_secret()
-            .to_owned(),
-    ));
-
-    let email_client = EmailClient::new(
-        configurations.email_client.base_url.clone(),
-        sender_email,
-        authorization_token,
-        timeout,
-    );
     let db_pool = get_connection_pool(&configurations);
-
     let application = Application::build(configurations)
         .await
-        .expect("Failed to build the application");
-    let address = format!("http://127.0.0.:{}", application.port());
+        .expect("Failed to build application");
+    let address = format!("http://127.0.0.1:{}", application.port());
 
     tokio::spawn(application.run_until_stopped());
 
