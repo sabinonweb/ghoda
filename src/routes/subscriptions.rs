@@ -1,6 +1,5 @@
 use crate::domain::{subscriber_email::SubscriberEmail, NewSubscriber, SubscriberName};
 use actix_web::{web, HttpResponse};
-use chrono::Utc;
 use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
