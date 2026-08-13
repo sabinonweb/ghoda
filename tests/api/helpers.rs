@@ -1,15 +1,18 @@
 use ghoda::{
     configurations::{get_configurations, DatabaseSettings},
+    email_client,
     startup::{get_connection_pool, Application},
     telemetry::{get_subscriber, init_subscriber},
 };
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
+use wiremock::MockServer;
 
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
+    pub email_server: MockServer,
 }
 
 impl TestApp {
@@ -39,9 +42,16 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 
 pub async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
+
+    let email_server = MockServer::start().await;
+
     let mut configurations = get_configurations().expect("Failed to get configuration!");
     configurations.database.database_name = Uuid::new_v4().to_string();
+    configurations.application.port = 0;
+    configurations.email_client.base_url = email_server.uri();
+    configure_database(&configurations.database).await;
     let db_pool = get_connection_pool(&configurations);
+
     let application = Application::build(configurations)
         .await
         .expect("Failed to build application");
@@ -49,7 +59,11 @@ pub async fn spawn_app() -> TestApp {
 
     tokio::spawn(application.run_until_stopped());
 
-    TestApp { address, db_pool }
+    TestApp {
+        address,
+        db_pool,
+        email_server,
+    }
     // let server = run().expect("Failed to get the server");
     // let _ = tokio::spawn(server);
 }

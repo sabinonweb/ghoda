@@ -33,6 +33,7 @@ impl Application {
             "{}:{}",
             configurations.application.host, configurations.application.port
         );
+        println!("Address: {:?}", address);
         let listener = TcpListener::bind(address.clone()).unwrap();
         let port = listener.local_addr().unwrap().port();
         let server = run(listener, connection, email_client)?;
