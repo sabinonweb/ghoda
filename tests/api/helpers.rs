@@ -1,6 +1,5 @@
 use ghoda::{
     configurations::{get_configurations, DatabaseSettings},
-    email_client,
     startup::{get_connection_pool, Application},
     telemetry::{get_subscriber, init_subscriber},
 };
